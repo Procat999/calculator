@@ -2,410 +2,395 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>System Emulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600&family=Roboto:wght@300;400;500&display=swap');
         
-        body {
-            font-family: 'Inter', sans-serif;
-            overflow: hidden;
-            background-color: #000;
-            user-select: none;
-            touch-action: manipulation;
+        :root {
+            --win-accent: #0078d4;
+            --android-accent: #3ddc84;
         }
 
-        /* Calculator Styles */
-        .calc-btn {
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: #000;
+            color: white;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* --- ENTRY LAYER (IPHONE CALC) --- */
+        #entry-layer {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            justify-content: flex-end;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .iphone-btn {
             aspect-ratio: 1;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 500;
-            border-radius: 9999px;
-            transition: background-color 0.1s, transform 0.05s;
+            font-size: 2rem;
             cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            transition: filter 0.2s;
         }
-        .calc-btn:active {
-            transform: scale(0.92);
-            filter: brightness(1.2);
+        .iphone-btn:active { filter: brightness(1.5); }
+        .iphone-btn.gray { background: #a5a5a5; color: black; }
+        .iphone-btn.dark { background: #333333; color: white; }
+        .iphone-btn.orange { background: #ff9f0a; color: white; }
+
+        /* --- WINDOWS 11 EMULATOR --- */
+        #win-emulator {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            background: url('https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=2874&auto=format&fit=crop') no-repeat center center;
+            background-size: cover;
+            position: relative;
         }
 
-        /* Secret Mode Transitions */
-        #secret-container {
-            position: fixed;
-            inset: 0;
-            background: #0f172a;
-            z-index: 50;
+        .win-taskbar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+            z-index: 100;
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .win-start-menu {
+            position: absolute;
+            bottom: 58px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            width: 520px;
+            height: 600px;
+            background: rgba(243, 243, 243, 0.85);
+            backdrop-filter: blur(40px);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0, 0, 0.2, 1);
+            padding: 30px;
+            color: #111;
+        }
+        .win-start-menu.active { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+
+        /* --- ANDROID 16 EMULATOR --- */
+        #android-emulator {
             display: none;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1c1e 0%, #000 100%);
+            position: relative;
             flex-direction: column;
         }
 
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+        .android-pill {
+            width: 120px;
+            height: 5px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            align-self: center;
+        }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .material-card {
+            background: #2d2f31;
+            border-radius: 28px;
+            padding: 20px;
+            margin: 10px;
+        }
 
-        .hidden-app { display: none; }
-        
-        .app-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            cursor: pointer;
+        /* --- SHARED STYLES --- */
+        .hidden { display: none !important; }
+        .fade-out { transform: translateY(-100%); }
+
+        #secret-hub {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
         }
     </style>
 </head>
-<body class="h-screen w-screen flex items-center justify-center">
+<body>
 
-    <!-- CALCULATOR INTERFACE -->
-    <div id="calculator-ui" class="bg-black w-full h-full max-w-md flex flex-col p-6 shadow-2xl transition-all duration-500 relative z-10">
-        <div class="flex-grow flex flex-col justify-end pb-8 pointer-events-none">
-            <div id="calc-history" class="text-gray-500 text-right text-lg h-8 mb-2 opacity-80"></div>
-            <div id="calc-display" class="text-white text-right text-7xl font-light tracking-tight truncate">0</div>
+    <!-- LAYER 1: IPHONE CALCULATOR ENTRY -->
+    <div id="entry-layer">
+        <div class="mb-8 px-4">
+            <div id="entry-history" class="text-right text-zinc-500 text-xl h-8"></div>
+            <div id="entry-display" class="text-right text-white text-8xl font-light truncate">0</div>
         </div>
+        
+        <div class="grid grid-cols-4 gap-4 mb-8">
+            <div onclick="press('AC')" class="iphone-btn gray" id="ac-btn">AC</div>
+            <div onclick="press('+/-')" class="iphone-btn gray">⁺/₋</div>
+            <div onclick="press('%')" class="iphone-btn gray">%</div>
+            <div onclick="press('/')" class="iphone-btn orange">÷</div>
+            
+            <div onclick="press('7')" class="iphone-btn dark">7</div>
+            <div onclick="press('8')" class="iphone-btn dark">8</div>
+            <div onclick="press('9')" class="iphone-btn dark">9</div>
+            <div onclick="press('*')" class="iphone-btn orange">×</div>
 
-        <div class="grid grid-cols-4 gap-4 pb-4">
-            <!-- Row 1 -->
-            <button onclick="calcClear()" class="calc-btn bg-zinc-400 text-black">AC</button>
-            <button onclick="calcOp('+/-')" class="calc-btn bg-zinc-400 text-black">±</button>
-            <button onclick="calcOp('%')" class="calc-btn bg-zinc-400 text-black">%</button>
-            <button onclick="calcOp('/')" class="calc-btn bg-orange-500 text-white">÷</button>
+            <div onclick="press('4')" class="iphone-btn dark">4</div>
+            <div onclick="press('5')" class="iphone-btn dark">5</div>
+            <div onclick="press('6')" class="iphone-btn dark">6</div>
+            <div onclick="press('-')" class="iphone-btn orange">−</div>
 
-            <!-- Row 2 -->
-            <button onclick="calcNum(7)" class="calc-btn bg-zinc-800 text-white">7</button>
-            <button onclick="calcNum(8)" class="calc-btn bg-zinc-800 text-white">8</button>
-            <button onclick="calcNum(9)" class="calc-btn bg-zinc-800 text-white">9</button>
-            <button onclick="calcOp('*')" class="calc-btn bg-orange-500 text-white">×</button>
+            <div onclick="press('1')" class="iphone-btn dark">1</div>
+            <div onclick="press('2')" class="iphone-btn dark">2</div>
+            <div onclick="press('3')" class="iphone-btn dark">3</div>
+            <div onclick="press('+')" class="iphone-btn orange">+</div>
 
-            <!-- Row 3 -->
-            <button onclick="calcNum(4)" class="calc-btn bg-zinc-800 text-white">4</button>
-            <button onclick="calcNum(5)" class="calc-btn bg-zinc-800 text-white">5</button>
-            <button onclick="calcNum(6)" class="calc-btn bg-zinc-800 text-white">6</button>
-            <button onclick="calcOp('-')" class="calc-btn bg-orange-500 text-white">−</button>
-
-            <!-- Row 4 -->
-            <button onclick="calcNum(1)" class="calc-btn bg-zinc-800 text-white">1</button>
-            <button onclick="calcNum(2)" class="calc-btn bg-zinc-800 text-white">2</button>
-            <button onclick="calcNum(3)" class="calc-btn bg-zinc-800 text-white">3</button>
-            <button onclick="calcOp('+')" class="calc-btn bg-orange-500 text-white">+</button>
-
-            <!-- Row 5 -->
-            <button onclick="calcNum(0)" class="calc-btn bg-zinc-800 text-white col-span-2 !aspect-auto !justify-start pl-8">0</button>
-            <button onclick="calcNum('.')" class="calc-btn bg-zinc-800 text-white">.</button>
-            <button onclick="calcEquals()" class="calc-btn bg-orange-500 text-white">=</button>
+            <div onclick="press('0')" class="iphone-btn dark col-span-2 !aspect-auto !rounded-full !justify-start pl-10">0</div>
+            <div onclick="press('.')" class="iphone-btn dark">.</div>
+            <div onclick="press('=')" class="iphone-btn orange">=</div>
         </div>
     </div>
 
-    <!-- SECRET MODE CONTAINER -->
-    <div id="secret-container" class="p-4 overflow-y-auto">
-        <div class="flex items-center justify-between mb-6 sticky top-0 bg-[#0f172a] py-2 z-10">
-            <h1 id="secret-title" class="text-2xl font-bold text-white flex items-center gap-2">
-                <i data-lucide="shield-check" class="text-blue-400"></i>
-                Secret Suite
-            </h1>
-            <button onclick="showHome()" id="home-btn" class="p-2 bg-slate-800 rounded-lg text-white hidden">
-                <i data-lucide="home"></i>
-            </button>
-            <div id="header-utils" class="flex gap-2">
-                <button onclick="fakeCrash()" class="p-2 bg-red-900/50 rounded-lg text-red-400">
-                    <i data-lucide="power"></i>
-                </button>
+    <!-- LAYER 2: WINDOWS 11 -->
+    <div id="win-emulator">
+        <div class="p-8 grid grid-cols-1 w-24 gap-6">
+            <div class="flex flex-col items-center gap-1 cursor-pointer group" onclick="launchApp('calculator')">
+                <div class="w-12 h-12 bg-white/10 backdrop-blur rounded flex items-center justify-center group-hover:bg-white/20 transition-all shadow-lg">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/23/Windows_Calculator_icon.png" class="w-8 h-8">
+                </div>
+                <span class="text-[11px] text-shadow">Calculator</span>
             </div>
         </div>
 
-        <!-- Dashboard View -->
-        <div id="dashboard" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div onclick="openApp('game-tictactoe')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
-                <div class="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center"><i data-lucide="grid"></i></div>
-                <span class="text-xs font-semibold">TicTacToe</span>
+        <div id="win-start-menu" class="win-start-menu">
+            <div class="flex justify-between items-center mb-6">
+                <span class="font-semibold text-sm">Pinned</span>
+                <button class="bg-white px-3 py-1 rounded text-xs shadow-sm border border-black/5">All apps ></button>
             </div>
-            <div onclick="openApp('app-notes')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
-                <div class="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center"><i data-lucide="file-text"></i></div>
-                <span class="text-xs font-semibold">Vault Notes</span>
-            </div>
-            <div onclick="openApp('app-drawing')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
-                <div class="w-12 h-12 bg-pink-500 rounded-xl flex items-center justify-center"><i data-lucide="palette"></i></div>
-                <span class="text-xs font-semibold">SketchPad</span>
-            </div>
-            <div onclick="openApp('game-reaction')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
-                <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center"><i data-lucide="zap"></i></div>
-                <span class="text-xs font-semibold">Reaction Speed</span>
-            </div>
-            <div onclick="openApp('app-clock')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
-                <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center"><i data-lucide="clock"></i></div>
-                <span class="text-xs font-semibold">Timer</span>
-            </div>
-            <div onclick="openApp('app-music')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
-                <div class="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center"><i data-lucide="music"></i></div>
-                <span class="text-xs font-semibold">Player</span>
-            </div>
-        </div>
-
-        <!-- App View -->
-        <div id="active-app-container" class="mt-4 hidden text-white pb-10">
-            <div id="game-tictactoe" class="hidden-app flex flex-col items-center gap-4">
-                <div id="ttt-board" class="grid grid-cols-3 gap-2 w-64 h-64"></div>
-                <button onclick="resetTTT()" class="mt-4 px-6 py-2 bg-slate-700 rounded-lg">Reset</button>
-            </div>
-            <div id="app-notes" class="hidden-app flex flex-col gap-4">
-                <textarea id="note-pad" class="w-full h-64 bg-slate-800 p-4 rounded-xl border border-slate-700 outline-none" placeholder="Encrypted notes..."></textarea>
-            </div>
-            <div id="app-drawing" class="hidden-app flex flex-col gap-4">
-                <canvas id="draw-canvas" class="bg-white rounded-lg w-full h-80"></canvas>
-                <button onclick="clearDraw()" class="bg-slate-700 p-2 rounded">Clear Canvas</button>
-            </div>
-            <div id="game-reaction" class="hidden-app flex flex-col items-center gap-4">
-                <div id="reaction-area" onclick="handleReactionTap()" class="w-full h-64 bg-slate-800 rounded-2xl flex items-center justify-center">
-                    <span id="reaction-prompt">Wait...</span>
+            <div class="grid grid-cols-6 gap-y-8">
+                <div class="flex flex-col items-center gap-2">
+                    <div class="w-10 h-10 bg-blue-500 rounded flex items-center justify-center text-white"><i data-lucide="shield"></i></div>
+                    <span class="text-[11px]">Vault</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="w-10 h-10 bg-green-500 rounded flex items-center justify-center text-white"><i data-lucide="gamepad-2"></i></div>
+                    <span class="text-[11px]">Games</span>
                 </div>
             </div>
-            <div id="app-clock" class="hidden-app flex flex-col items-center gap-4">
-                <div class="text-6xl font-mono" id="stopwatch-display">00:00:00</div>
-                <button onclick="toggleStopwatch()" id="sw-toggle" class="bg-green-600 px-8 py-2 rounded-full">Start</button>
+        </div>
+
+        <div class="win-taskbar">
+            <div class="flex gap-2 items-center">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/archive/8/87/20211103131742%21Windows_logo_-_2021.svg" class="w-6 h-6 hover:scale-110 transition-transform cursor-pointer" onclick="toggleStart()">
+                <div class="w-10 h-10 flex items-center justify-center hover:bg-black/5 rounded cursor-pointer"><i data-lucide="search" class="text-zinc-700 w-5 h-5"></i></div>
             </div>
-            <div id="app-music" class="hidden-app flex flex-col gap-4">
-                <input type="file" id="music-upload" accept="audio/*" class="hidden" onchange="loadMusic(event)">
-                <button onclick="document.getElementById('music-upload').click()" class="bg-slate-700 py-3 rounded-lg">Pick MP3</button>
-                <button onclick="togglePlay()" class="bg-cyan-600 py-3 rounded-lg">Play/Pause</button>
+            <div class="absolute right-4 flex items-center gap-4 text-zinc-800 text-xs font-medium">
+                <div class="flex flex-col items-end">
+                    <span id="win-time">12:00 PM</span>
+                    <span id="win-date">1/21/2026</span>
+                </div>
+                <i data-lucide="message-square" class="w-4 h-4"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- LAYER 2: ANDROID 16 -->
+    <div id="android-emulator">
+        <div class="flex justify-between p-4 px-8 text-sm font-medium">
+            <span id="android-time">12:00</span>
+            <div class="flex gap-2 items-center">
+                <i data-lucide="signal" class="w-4 h-4"></i>
+                <i data-lucide="wifi" class="w-4 h-4"></i>
+                <i data-lucide="battery" class="w-4 h-4"></i>
+            </div>
+        </div>
+
+        <div class="flex-grow p-6">
+            <div class="bg-white/10 backdrop-blur-xl rounded-[40px] p-6 mb-8 flex items-center gap-4">
+                <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-black shadow-xl">
+                    <i data-lucide="search"></i>
+                </div>
+                <span class="text-white/60">Search apps...</span>
+            </div>
+
+            <div class="grid grid-cols-4 gap-y-10">
+                <div class="flex flex-col items-center gap-2" onclick="launchApp('calculator')">
+                    <div class="w-16 h-16 bg-[#3ddc84] rounded-[22px] flex items-center justify-center text-white shadow-lg">
+                        <i data-lucide="calculator" class="w-8 h-8"></i>
+                    </div>
+                    <span class="text-xs">Calculator</span>
+                </div>
+                <div class="flex flex-col items-center gap-2 opacity-50">
+                    <div class="w-16 h-16 bg-blue-400 rounded-[22px] flex items-center justify-center text-white shadow-lg">
+                        <i data-lucide="message-circle" class="w-8 h-8"></i>
+                    </div>
+                    <span class="text-xs">Messages</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="android-pill mb-4"></div>
+    </div>
+
+    <!-- OVERLAY: SECRET HUB -->
+    <div id="secret-hub">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center">
+            <h2 class="text-xl font-bold tracking-tighter">ENCRYPTED_OS_V4</h2>
+            <button onclick="panic()" class="bg-red-500 text-white px-4 py-1 rounded-full text-xs font-bold">PANIC</button>
+        </div>
+        <div class="p-8 grid grid-cols-2 gap-4">
+            <div class="aspect-square bg-zinc-900 rounded-3xl flex flex-col items-center justify-center border border-white/5 hover:border-green-500/50 cursor-pointer">
+                <i data-lucide="ghost" class="w-10 h-10 mb-2 text-green-500"></i>
+                <span class="text-[10px] uppercase font-bold tracking-widest text-white/40">Hidden Files</span>
+            </div>
+            <div class="aspect-square bg-zinc-900 rounded-3xl flex flex-col items-center justify-center border border-white/5 hover:border-green-500/50 cursor-pointer">
+                <i data-lucide="terminal" class="w-10 h-10 mb-2 text-green-500"></i>
+                <span class="text-[10px] uppercase font-bold tracking-widest text-white/40">Proxy Web</span>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CALCULATOR STATE ---
-        // Declare variables at the top to avoid initialization errors
-        let currentInput = "0";
-        let prevValue = null;
-        let operator = null;
-        let waitingForOperand = false;
-        let lastClearTime = 0;
-        let activeApp = null;
+        let calcVal = "0";
+        let calcPrev = null;
+        let calcOp = null;
+        let calcWait = false;
+        let lastAcTap = 0;
+        let isSecretActive = false;
 
-        const displayEl = document.getElementById('calc-display');
-        const historyEl = document.getElementById('calc-history');
-
-        function updateDisplay() {
-            displayEl.innerText = currentInput;
-            if (operator) {
-                historyEl.innerText = `${prevValue} ${operator === '*' ? '×' : operator === '/' ? '÷' : operator}`;
-            } else {
-                historyEl.innerText = "";
-            }
+        function refreshIcons() {
+            if (window.lucide) window.lucide.createIcons();
         }
 
-        function calcNum(num) {
-            if (waitingForOperand) {
-                currentInput = String(num);
-                waitingForOperand = false;
-            } else {
-                if (num === '.') {
-                    if (!currentInput.includes('.')) currentInput += '.';
-                } else {
-                    currentInput = currentInput === "0" ? String(num) : currentInput + String(num);
+        // --- CORE LOGIC ---
+        function press(key) {
+            const display = document.getElementById('entry-display');
+            const history = document.getElementById('entry-history');
+
+            if (key === 'AC') {
+                const now = Date.now();
+                if (now - lastAcTap < 300) { panic(); return; }
+                lastAcTap = now;
+                calcVal = "0"; calcPrev = null; calcOp = null; calcWait = false;
+            } else if (!isNaN(key) || key === '.') {
+                if (calcWait) { calcVal = key; calcWait = false; }
+                else { calcVal = calcVal === "0" ? key : calcVal + key; }
+            } else if (['+', '-', '*', '/'].includes(key)) {
+                calcPrev = parseFloat(calcVal);
+                calcOp = key;
+                calcWait = true;
+            } else if (key === '=') {
+                const current = parseFloat(calcVal);
+                if (calcPrev === 776 && calcOp === '*' && current === 228) {
+                    launchEmulator();
+                    return;
+                }
+                if (calcOp) {
+                    let res = 0;
+                    if (calcOp === '+') res = calcPrev + current;
+                    if (calcOp === '-') res = calcPrev - current;
+                    if (calcOp === '*') res = calcPrev * current;
+                    if (calcOp === '/') res = calcPrev / current;
+                    calcVal = String(res);
+                    calcOp = null;
                 }
             }
-            updateDisplay();
+            display.innerText = calcVal;
+            history.innerText = calcOp ? `${calcPrev} ${calcOp}` : '';
         }
 
-        function calcOp(op) {
-            if (op === '+/-') {
-                currentInput = String(parseFloat(currentInput) * -1);
-                updateDisplay();
-                return;
-            }
-            if (op === '%') {
-                currentInput = String(parseFloat(currentInput) / 100);
-                updateDisplay();
-                return;
-            }
-
-            if (operator && !waitingForOperand) {
-                performCalc();
-            }
-
-            prevValue = parseFloat(currentInput);
-            operator = op;
-            waitingForOperand = true;
-            updateDisplay();
-        }
-
-        function performCalc() {
-            const current = parseFloat(currentInput);
-            if (isNaN(prevValue) || isNaN(current)) return;
-
-            // SECRET TRIGGER: 776 * 228
-            if (prevValue === 776 && operator === "*" && current === 228) {
-                enterSecretMode();
-                return;
-            }
-
-            let res = 0;
-            switch(operator) {
-                case '+': res = prevValue + current; break;
-                case '-': res = prevValue - current; break;
-                case '*': res = prevValue * current; break;
-                case '/': res = prevValue / current; break;
-            }
-            currentInput = String(res);
-            prevValue = res;
-        }
-
-        function calcEquals() {
-            if (!operator || waitingForOperand) return;
-            performCalc();
-            operator = null;
-            waitingForOperand = false;
-            updateDisplay();
-        }
-
-        function calcClear() {
-            const now = Date.now();
-            if (now - lastClearTime < 300) {
-                exitSecretMode();
-            }
-            lastClearTime = now;
-
-            currentInput = "0";
-            prevValue = null;
-            operator = null;
-            waitingForOperand = false;
-            updateDisplay();
-        }
-
-        // --- MODE SWITCHING ---
-        function enterSecretMode() {
-            const ui = document.getElementById('calculator-ui');
-            const secret = document.getElementById('secret-container');
-            ui.classList.add('opacity-0', 'scale-95');
-            setTimeout(() => {
-                ui.style.display = 'none';
-                secret.style.display = 'flex';
-                secret.classList.add('fade-in');
-            }, 400);
-        }
-
-        function exitSecretMode() {
-            const ui = document.getElementById('calculator-ui');
-            const secret = document.getElementById('secret-container');
-            if (secret.style.display === 'none') return;
-            secret.style.display = 'none';
-            ui.style.display = 'flex';
-            ui.classList.remove('opacity-0', 'scale-95');
-            showHome();
-        }
-
-        function fakeCrash() {
-            document.body.innerHTML = `<div class="bg-black h-screen w-screen flex flex-col items-center justify-center p-10 text-white font-mono"><div class="text-4xl mb-4">:(</div><div>Restarting system...</div></div>`;
-            setTimeout(() => location.reload(), 2000);
-        }
-
-        // --- APP LOGIC ---
-        function openApp(id) {
-            document.getElementById('dashboard').classList.add('hidden');
-            document.getElementById('active-app-container').classList.remove('hidden');
-            document.getElementById('home-btn').classList.remove('hidden');
-            if (activeApp) document.getElementById(activeApp).classList.add('hidden-app');
-            activeApp = id;
-            document.getElementById(id).classList.remove('hidden-app');
+        function launchEmulator() {
+            const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth < 768;
+            document.getElementById('entry-layer').classList.add('fade-out');
             
-            if(id === 'game-tictactoe') resetTTT();
-            if(id === 'app-drawing') initDrawing();
+            setTimeout(() => {
+                document.getElementById('entry-layer').classList.add('hidden');
+                if (isMobile) {
+                    document.getElementById('android-emulator').style.display = 'flex';
+                } else {
+                    document.getElementById('win-emulator').style.display = 'block';
+                }
+                isSecretActive = true;
+                refreshIcons();
+            }, 600);
         }
 
-        function showHome() {
-            if (activeApp) document.getElementById(activeApp).classList.add('hidden-app');
-            document.getElementById('active-app-container').classList.add('hidden');
-            document.getElementById('dashboard').classList.remove('hidden');
-            document.getElementById('home-btn').classList.add('hidden');
-            activeApp = null;
+        function panic() {
+            isSecretActive = false;
+            document.getElementById('secret-hub').style.display = 'none';
+            document.getElementById('win-emulator').style.display = 'none';
+            document.getElementById('android-emulator').style.display = 'none';
+            
+            const entry = document.getElementById('entry-layer');
+            entry.classList.remove('hidden');
+            setTimeout(() => {
+                entry.classList.remove('fade-out');
+                calcVal = "0";
+                document.getElementById('entry-display').innerText = "0";
+                document.getElementById('entry-history').innerText = "";
+            }, 10);
         }
 
-        // TicTacToe
-        let tttBoard = Array(9).fill(null);
-        function resetTTT() {
-            tttBoard = Array(9).fill(null);
-            const b = document.getElementById('ttt-board');
-            b.innerHTML = '';
-            for(let i=0; i<9; i++) {
-                const c = document.createElement('div');
-                c.className = 'bg-slate-800 rounded flex items-center justify-center text-3xl font-bold cursor-pointer';
-                c.onclick = () => {
-                    if(tttBoard[i]) return;
-                    tttBoard[i] = 'X';
-                    c.innerText = 'X';
-                    setTimeout(() => {
-                        const empty = tttBoard.map((v, idx) => v === null ? idx : null).filter(v => v !== null);
-                        if(empty.length > 0) {
-                            const move = empty[Math.floor(Math.random()*empty.length)];
-                            tttBoard[move] = 'O';
-                            b.children[move].innerText = 'O';
-                        }
-                    }, 300);
-                };
-                b.appendChild(c);
+        function launchApp(id) {
+            if (id === 'calculator') {
+                document.getElementById('secret-hub').style.display = 'flex';
+                refreshIcons();
             }
         }
 
-        // Stopwatch
-        let swTime = 0, swInt;
-        function toggleStopwatch() {
-            const btn = document.getElementById('sw-toggle');
-            if(swInt) {
-                clearInterval(swInt); swInt = null;
-                btn.innerText = 'Start'; btn.className = 'bg-green-600 px-8 py-2 rounded-full';
-            } else {
-                swInt = setInterval(() => {
-                    swTime += 100;
-                    const d = new Date(swTime);
-                    document.getElementById('stopwatch-display').innerText = d.toISOString().substr(14, 8);
-                }, 100);
-                btn.innerText = 'Stop'; btn.className = 'bg-red-600 px-8 py-2 rounded-full';
+        // --- WINDOWS UI HELPERS ---
+        function toggleStart() {
+            document.getElementById('win-start-menu').classList.toggle('active');
+        }
+
+        function updateClocks() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString();
+            
+            if (document.getElementById('win-time')) {
+                document.getElementById('win-time').innerText = timeStr;
+                document.getElementById('win-date').innerText = dateStr;
             }
-        }
-
-        // Drawing
-        let drawing = false, ctx;
-        function initDrawing() {
-            const canvas = document.getElementById('draw-canvas');
-            ctx = canvas.getContext('2d');
-            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-            canvas.onpointerdown = (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
-            canvas.onpointermove = (e) => { if(drawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
-            window.onpointerup = () => drawing = false;
-        }
-        function clearDraw() { if(ctx) ctx.clearRect(0,0,1000,1000); }
-
-        // Reaction
-        function handleReactionTap() {
-            const area = document.getElementById('reaction-area');
-            const prompt = document.getElementById('reaction-prompt');
-            if(area.style.backgroundColor === 'green') {
-                prompt.innerText = 'Result: ' + (Date.now() - area.dataset.start) + 'ms';
-                area.style.backgroundColor = '';
-            } else {
-                prompt.innerText = 'Wait for green...';
-                setTimeout(() => {
-                    area.style.backgroundColor = 'green';
-                    area.dataset.start = Date.now();
-                }, Math.random() * 2000 + 1000);
+            if (document.getElementById('android-time')) {
+                document.getElementById('android-time').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
             }
+            setTimeout(updateClocks, 1000);
         }
 
-        // Audio
-        let audio = new Audio();
-        function loadMusic(e) { audio.src = URL.createObjectURL(e.target.files[0]); }
-        function togglePlay() { audio.paused ? audio.play() : audio.pause(); }
+        window.onload = () => {
+            updateClocks();
+            refreshIcons();
+        };
 
-        // Initialize icons after everything is loaded
-        window.addEventListener('DOMContentLoaded', () => {
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
+        // Close start menu if clicking desktop
+        window.addEventListener('click', (e) => {
+            const start = document.getElementById('win-start-menu');
+            if (start && start.classList.contains('active') && !e.target.closest('.win-taskbar') && !e.target.closest('.win-start-menu')) {
+                start.classList.remove('active');
             }
         });
     </script>
