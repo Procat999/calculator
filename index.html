@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background-color: #000;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Calculator Styles */
+        .calc-btn {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 500;
+            border-radius: 9999px;
+            transition: background-color 0.1s, transform 0.05s;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .calc-btn:active {
+            transform: scale(0.92);
+            filter: brightness(1.2);
+        }
+
+        /* Secret Mode Transitions */
+        #secret-container {
+            position: fixed;
+            inset: 0;
+            background: #0f172a;
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+        }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        .hidden-app { display: none; }
+        
+        .app-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex items-center justify-center">
+
+    <!-- CALCULATOR INTERFACE -->
+    <div id="calculator-ui" class="bg-black w-full h-full max-w-md flex flex-col p-6 shadow-2xl transition-all duration-500 relative z-10">
+        <div class="flex-grow flex flex-col justify-end pb-8 pointer-events-none">
+            <div id="calc-history" class="text-gray-500 text-right text-lg h-8 mb-2 opacity-80"></div>
+            <div id="calc-display" class="text-white text-right text-7xl font-light tracking-tight truncate">0</div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-4 pb-4">
+            <!-- Row 1 -->
+            <button onclick="calcClear()" class="calc-btn bg-zinc-400 text-black">AC</button>
+            <button onclick="calcOp('+/-')" class="calc-btn bg-zinc-400 text-black">±</button>
+            <button onclick="calcOp('%')" class="calc-btn bg-zinc-400 text-black">%</button>
+            <button onclick="calcOp('/')" class="calc-btn bg-orange-500 text-white">÷</button>
+
+            <!-- Row 2 -->
+            <button onclick="calcNum(7)" class="calc-btn bg-zinc-800 text-white">7</button>
+            <button onclick="calcNum(8)" class="calc-btn bg-zinc-800 text-white">8</button>
+            <button onclick="calcNum(9)" class="calc-btn bg-zinc-800 text-white">9</button>
+            <button onclick="calcOp('*')" class="calc-btn bg-orange-500 text-white">×</button>
+
+            <!-- Row 3 -->
+            <button onclick="calcNum(4)" class="calc-btn bg-zinc-800 text-white">4</button>
+            <button onclick="calcNum(5)" class="calc-btn bg-zinc-800 text-white">5</button>
+            <button onclick="calcNum(6)" class="calc-btn bg-zinc-800 text-white">6</button>
+            <button onclick="calcOp('-')" class="calc-btn bg-orange-500 text-white">−</button>
+
+            <!-- Row 4 -->
+            <button onclick="calcNum(1)" class="calc-btn bg-zinc-800 text-white">1</button>
+            <button onclick="calcNum(2)" class="calc-btn bg-zinc-800 text-white">2</button>
+            <button onclick="calcNum(3)" class="calc-btn bg-zinc-800 text-white">3</button>
+            <button onclick="calcOp('+')" class="calc-btn bg-orange-500 text-white">+</button>
+
+            <!-- Row 5 -->
+            <button onclick="calcNum(0)" class="calc-btn bg-zinc-800 text-white col-span-2 !aspect-auto !justify-start pl-8">0</button>
+            <button onclick="calcNum('.')" class="calc-btn bg-zinc-800 text-white">.</button>
+            <button onclick="calcEquals()" class="calc-btn bg-orange-500 text-white">=</button>
+        </div>
+    </div>
+
+    <!-- SECRET MODE CONTAINER -->
+    <div id="secret-container" class="p-4 overflow-y-auto">
+        <div class="flex items-center justify-between mb-6 sticky top-0 bg-[#0f172a] py-2 z-10">
+            <h1 id="secret-title" class="text-2xl font-bold text-white flex items-center gap-2">
+                <i data-lucide="shield-check" class="text-blue-400"></i>
+                Secret Suite
+            </h1>
+            <button onclick="showHome()" id="home-btn" class="p-2 bg-slate-800 rounded-lg text-white hidden">
+                <i data-lucide="home"></i>
+            </button>
+            <div id="header-utils" class="flex gap-2">
+                <button onclick="fakeCrash()" class="p-2 bg-red-900/50 rounded-lg text-red-400">
+                    <i data-lucide="power"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboard" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div onclick="openApp('game-tictactoe')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
+                <div class="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center"><i data-lucide="grid"></i></div>
+                <span class="text-xs font-semibold">TicTacToe</span>
+            </div>
+            <div onclick="openApp('app-notes')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
+                <div class="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center"><i data-lucide="file-text"></i></div>
+                <span class="text-xs font-semibold">Vault Notes</span>
+            </div>
+            <div onclick="openApp('app-drawing')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
+                <div class="w-12 h-12 bg-pink-500 rounded-xl flex items-center justify-center"><i data-lucide="palette"></i></div>
+                <span class="text-xs font-semibold">SketchPad</span>
+            </div>
+            <div onclick="openApp('game-reaction')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
+                <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center"><i data-lucide="zap"></i></div>
+                <span class="text-xs font-semibold">Reaction Speed</span>
+            </div>
+            <div onclick="openApp('app-clock')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
+                <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center"><i data-lucide="clock"></i></div>
+                <span class="text-xs font-semibold">Timer</span>
+            </div>
+            <div onclick="openApp('app-music')" class="app-card p-4 rounded-2xl flex flex-col items-center gap-2 text-white">
+                <div class="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center"><i data-lucide="music"></i></div>
+                <span class="text-xs font-semibold">Player</span>
+            </div>
+        </div>
+
+        <!-- App View -->
+        <div id="active-app-container" class="mt-4 hidden text-white pb-10">
+            <div id="game-tictactoe" class="hidden-app flex flex-col items-center gap-4">
+                <div id="ttt-board" class="grid grid-cols-3 gap-2 w-64 h-64"></div>
+                <button onclick="resetTTT()" class="mt-4 px-6 py-2 bg-slate-700 rounded-lg">Reset</button>
+            </div>
+            <div id="app-notes" class="hidden-app flex flex-col gap-4">
+                <textarea id="note-pad" class="w-full h-64 bg-slate-800 p-4 rounded-xl border border-slate-700 outline-none" placeholder="Encrypted notes..."></textarea>
+            </div>
+            <div id="app-drawing" class="hidden-app flex flex-col gap-4">
+                <canvas id="draw-canvas" class="bg-white rounded-lg w-full h-80"></canvas>
+                <button onclick="clearDraw()" class="bg-slate-700 p-2 rounded">Clear Canvas</button>
+            </div>
+            <div id="game-reaction" class="hidden-app flex flex-col items-center gap-4">
+                <div id="reaction-area" onclick="handleReactionTap()" class="w-full h-64 bg-slate-800 rounded-2xl flex items-center justify-center">
+                    <span id="reaction-prompt">Wait...</span>
+                </div>
+            </div>
+            <div id="app-clock" class="hidden-app flex flex-col items-center gap-4">
+                <div class="text-6xl font-mono" id="stopwatch-display">00:00:00</div>
+                <button onclick="toggleStopwatch()" id="sw-toggle" class="bg-green-600 px-8 py-2 rounded-full">Start</button>
+            </div>
+            <div id="app-music" class="hidden-app flex flex-col gap-4">
+                <input type="file" id="music-upload" accept="audio/*" class="hidden" onchange="loadMusic(event)">
+                <button onclick="document.getElementById('music-upload').click()" class="bg-slate-700 py-3 rounded-lg">Pick MP3</button>
+                <button onclick="togglePlay()" class="bg-cyan-600 py-3 rounded-lg">Play/Pause</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CALCULATOR STATE ---
+        // Declare variables at the top to avoid initialization errors
+        let currentInput = "0";
+        let prevValue = null;
+        let operator = null;
+        let waitingForOperand = false;
+        let lastClearTime = 0;
+        let activeApp = null;
+
+        const displayEl = document.getElementById('calc-display');
+        const historyEl = document.getElementById('calc-history');
+
+        function updateDisplay() {
+            displayEl.innerText = currentInput;
+            if (operator) {
+                historyEl.innerText = `${prevValue} ${operator === '*' ? '×' : operator === '/' ? '÷' : operator}`;
+            } else {
+                historyEl.innerText = "";
+            }
+        }
+
+        function calcNum(num) {
+            if (waitingForOperand) {
+                currentInput = String(num);
+                waitingForOperand = false;
+            } else {
+                if (num === '.') {
+                    if (!currentInput.includes('.')) currentInput += '.';
+                } else {
+                    currentInput = currentInput === "0" ? String(num) : currentInput + String(num);
+                }
+            }
+            updateDisplay();
+        }
+
+        function calcOp(op) {
+            if (op === '+/-') {
+                currentInput = String(parseFloat(currentInput) * -1);
+                updateDisplay();
+                return;
+            }
+            if (op === '%') {
+                currentInput = String(parseFloat(currentInput) / 100);
+                updateDisplay();
+                return;
+            }
+
+            if (operator && !waitingForOperand) {
+                performCalc();
+            }
+
+            prevValue = parseFloat(currentInput);
+            operator = op;
+            waitingForOperand = true;
+            updateDisplay();
+        }
+
+        function performCalc() {
+            const current = parseFloat(currentInput);
+            if (isNaN(prevValue) || isNaN(current)) return;
+
+            // SECRET TRIGGER: 776 * 228
+            if (prevValue === 776 && operator === "*" && current === 228) {
+                enterSecretMode();
+                return;
+            }
+
+            let res = 0;
+            switch(operator) {
+                case '+': res = prevValue + current; break;
+                case '-': res = prevValue - current; break;
+                case '*': res = prevValue * current; break;
+                case '/': res = prevValue / current; break;
+            }
+            currentInput = String(res);
+            prevValue = res;
+        }
+
+        function calcEquals() {
+            if (!operator || waitingForOperand) return;
+            performCalc();
+            operator = null;
+            waitingForOperand = false;
+            updateDisplay();
+        }
+
+        function calcClear() {
+            const now = Date.now();
+            if (now - lastClearTime < 300) {
+                exitSecretMode();
+            }
+            lastClearTime = now;
+
+            currentInput = "0";
+            prevValue = null;
+            operator = null;
+            waitingForOperand = false;
+            updateDisplay();
+        }
+
+        // --- MODE SWITCHING ---
+        function enterSecretMode() {
+            const ui = document.getElementById('calculator-ui');
+            const secret = document.getElementById('secret-container');
+            ui.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                ui.style.display = 'none';
+                secret.style.display = 'flex';
+                secret.classList.add('fade-in');
+            }, 400);
+        }
+
+        function exitSecretMode() {
+            const ui = document.getElementById('calculator-ui');
+            const secret = document.getElementById('secret-container');
+            if (secret.style.display === 'none') return;
+            secret.style.display = 'none';
+            ui.style.display = 'flex';
+            ui.classList.remove('opacity-0', 'scale-95');
+            showHome();
+        }
+
+        function fakeCrash() {
+            document.body.innerHTML = `<div class="bg-black h-screen w-screen flex flex-col items-center justify-center p-10 text-white font-mono"><div class="text-4xl mb-4">:(</div><div>Restarting system...</div></div>`;
+            setTimeout(() => location.reload(), 2000);
+        }
+
+        // --- APP LOGIC ---
+        function openApp(id) {
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('active-app-container').classList.remove('hidden');
+            document.getElementById('home-btn').classList.remove('hidden');
+            if (activeApp) document.getElementById(activeApp).classList.add('hidden-app');
+            activeApp = id;
+            document.getElementById(id).classList.remove('hidden-app');
+            
+            if(id === 'game-tictactoe') resetTTT();
+            if(id === 'app-drawing') initDrawing();
+        }
+
+        function showHome() {
+            if (activeApp) document.getElementById(activeApp).classList.add('hidden-app');
+            document.getElementById('active-app-container').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('home-btn').classList.add('hidden');
+            activeApp = null;
+        }
+
+        // TicTacToe
+        let tttBoard = Array(9).fill(null);
+        function resetTTT() {
+            tttBoard = Array(9).fill(null);
+            const b = document.getElementById('ttt-board');
+            b.innerHTML = '';
+            for(let i=0; i<9; i++) {
+                const c = document.createElement('div');
+                c.className = 'bg-slate-800 rounded flex items-center justify-center text-3xl font-bold cursor-pointer';
+                c.onclick = () => {
+                    if(tttBoard[i]) return;
+                    tttBoard[i] = 'X';
+                    c.innerText = 'X';
+                    setTimeout(() => {
+                        const empty = tttBoard.map((v, idx) => v === null ? idx : null).filter(v => v !== null);
+                        if(empty.length > 0) {
+                            const move = empty[Math.floor(Math.random()*empty.length)];
+                            tttBoard[move] = 'O';
+                            b.children[move].innerText = 'O';
+                        }
+                    }, 300);
+                };
+                b.appendChild(c);
+            }
+        }
+
+        // Stopwatch
+        let swTime = 0, swInt;
+        function toggleStopwatch() {
+            const btn = document.getElementById('sw-toggle');
+            if(swInt) {
+                clearInterval(swInt); swInt = null;
+                btn.innerText = 'Start'; btn.className = 'bg-green-600 px-8 py-2 rounded-full';
+            } else {
+                swInt = setInterval(() => {
+                    swTime += 100;
+                    const d = new Date(swTime);
+                    document.getElementById('stopwatch-display').innerText = d.toISOString().substr(14, 8);
+                }, 100);
+                btn.innerText = 'Stop'; btn.className = 'bg-red-600 px-8 py-2 rounded-full';
+            }
+        }
+
+        // Drawing
+        let drawing = false, ctx;
+        function initDrawing() {
+            const canvas = document.getElementById('draw-canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+            canvas.onpointerdown = (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
+            canvas.onpointermove = (e) => { if(drawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
+            window.onpointerup = () => drawing = false;
+        }
+        function clearDraw() { if(ctx) ctx.clearRect(0,0,1000,1000); }
+
+        // Reaction
+        function handleReactionTap() {
+            const area = document.getElementById('reaction-area');
+            const prompt = document.getElementById('reaction-prompt');
+            if(area.style.backgroundColor === 'green') {
+                prompt.innerText = 'Result: ' + (Date.now() - area.dataset.start) + 'ms';
+                area.style.backgroundColor = '';
+            } else {
+                prompt.innerText = 'Wait for green...';
+                setTimeout(() => {
+                    area.style.backgroundColor = 'green';
+                    area.dataset.start = Date.now();
+                }, Math.random() * 2000 + 1000);
+            }
+        }
+
+        // Audio
+        let audio = new Audio();
+        function loadMusic(e) { audio.src = URL.createObjectURL(e.target.files[0]); }
+        function togglePlay() { audio.paused ? audio.play() : audio.pause(); }
+
+        // Initialize icons after everything is loaded
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>
