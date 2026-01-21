@@ -34,73 +34,50 @@
         /* --- WINDOWS EMULATOR --- */
         #win-emulator {
             display: none; width: 100vw; height: 100vh;
-            background: url('https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&w=2000') center/cover;
+            background: url('https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&w=2000') center/cover;
             position: relative;
         }
 
         .win-taskbar {
             position: absolute; bottom: 0; width: 100%; height: 48px;
-            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px);
-            display: flex; align-items: center; justify-content: center; z-index: 100;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px);
+            display: flex; align-items: center; justify-content: center; z-index: 200;
         }
 
-        /* --- APP WINDOWS --- */
         .app-window {
-            position: absolute; top: 10%; left: 10%; width: 80%; height: 75%;
-            background: #1a1a1a; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            position: absolute; top: 10%; left: 15%; width: 70%; height: 75%;
+            background: #0f172a; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); display: none;
             flex-direction: column; overflow: hidden; z-index: 50;
         }
+        .active-win { z-index: 100; border-color: rgba(59, 130, 246, 0.5); }
 
-        .window-header { padding: 12px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: move; }
+        .window-header { padding: 10px 16px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
 
-        /* --- SEARCH MENU --- */
-        #search-menu {
-            position: absolute; bottom: 54px; left: 50%; transform: translateX(-50%);
-            width: 500px; max-width: 95vw; background: rgba(243, 244, 246, 0.95);
-            backdrop-filter: blur(20px); border-radius: 12px; display: none;
-            flex-direction: column; padding: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 200;
-        }
-
-        /* --- MOBILE EMULATOR --- */
-        #android-emulator { display: none; width: 100vw; height: 100vh; background: linear-gradient(180deg, #0f172a 0%, #020617 100%); flex-direction: column; }
-
-        /* --- SHARED --- */
-        .hidden { display: none !important; }
-        .fade-out { transform: translateY(-100%) scale(0.9); opacity: 0; }
-
-        /* --- DRAGGABLE ICONS --- */
-        #desktop-icons { position: absolute; inset: 0; padding: 20px; pointer-events: none; }
         .desktop-icon {
-            width: 80px; position: absolute; display: flex; flex-direction: column;
-            align-items: center; gap: 4px; cursor: pointer; text-align: center; pointer-events: auto;
-            transition: transform 0.1s;
+            width: 80px; height: 90px; position: absolute; display: flex; flex-direction: column;
+            align-items: center; gap: 4px; cursor: pointer; text-align: center;
         }
-        .desktop-icon:active { transform: scale(0.95); }
-        .desktop-icon .icon-box {
-            width: 48px; height: 48px; border-radius: 10px; display: flex;
-            align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            pointer-events: none; /* Let the container handle clicks */
+        .icon-box {
+            width: 50px; height: 50px; border-radius: 12px; display: flex;
+            align-items: center; justify-content: center; font-size: 24px;
         }
 
-        .context-menu {
-            position: fixed; background: #222; border: 1px solid #444; border-radius: 8px;
-            padding: 4px; z-index: 1000; display: none; min-width: 120px;
-        }
-        .context-menu button {
-            width: 100%; text-align: left; padding: 8px 12px; font-size: 12px; border-radius: 4px; color: white;
-        }
-        .context-menu button:hover { background: #333; color: #ff4444; }
+        canvas { background: #000; display: block; image-rendering: pixelated; touch-action: none; }
+        
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px; padding: 20px; }
+        .game-card { background: #1e293b; padding: 16px; border-radius: 12px; cursor: pointer; text-align: center; transition: transform 0.2s; border: 1px solid #334155; }
+        .game-card:hover { transform: translateY(-5px); border-color: #3b82f6; }
 
-        #game-container canvas { background: #000; border: 2px solid #333; max-width: 90vw; max-height: 50vh; }
+        #android-emulator { display: none; width: 100vw; height: 100vh; background: #000; }
     </style>
 </head>
-<body>
+<body onkeydown="handleKey(event)">
 
-    <!-- CALCULATOR LOCK -->
+    <!-- CALCULATOR -->
     <div id="entry-layer">
         <div class="calc-container">
-            <div class="mb-6 px-4"><div id="entry-display" class="text-right text-white text-7xl font-light truncate">0</div></div>
+            <div id="entry-display" class="text-right text-white text-7xl font-light mb-6 px-4 truncate">0</div>
             <div class="grid grid-cols-4 gap-3">
                 <div onclick="press('AC')" class="iphone-btn gray">AC</div>
                 <div onclick="press('+/-')" class="iphone-btn gray">⁺/₋</div>
@@ -125,370 +102,382 @@
         </div>
     </div>
 
-    <!-- CONTEXT MENU -->
-    <div id="icon-ctx" class="context-menu">
-        <button id="ctx-delete" class="flex items-center gap-2"><i data-lucide="trash-2" class="w-3 h-3"></i> Uninstall</button>
-    </div>
-
-    <!-- WINDOWS 11 DESKTOP -->
-    <div id="win-emulator" oncontextmenu="return false;">
-        <div id="desktop-icons">
-            <div class="desktop-icon" style="top:20px; left:20px" data-id="store" onmousedown="handleIconInteraction(event, 'store')">
-                <div class="icon-box bg-blue-600"><i data-lucide="shopping-bag" class="text-white"></i></div>
-                <span class="text-[10px] text-white">App Store</span>
-            </div>
-            <div class="desktop-icon" style="top:20px; left:110px" data-id="notes" onmousedown="handleIconInteraction(event, 'notes')">
-                <div class="icon-box bg-yellow-500"><i data-lucide="file-text" class="text-white"></i></div>
-                <span class="text-[10px] text-white">System Notes</span>
-            </div>
+    <!-- WINDOWS EMULATOR -->
+    <div id="win-emulator">
+        <!-- Desktop Icons -->
+        <div class="desktop-icon" style="top:30px; left:30px" onclick="openApp('games')">
+            <div class="icon-box bg-indigo-600">🎮</div>
+            <span class="text-[11px] font-medium shadow-sm">Game Hub</span>
+        </div>
+        <div class="desktop-icon" style="top:130px; left:30px" onclick="openApp('notes')">
+            <div class="icon-box bg-amber-500">📝</div>
+            <span class="text-[11px] font-medium">Readme</span>
         </div>
 
-        <!-- SEARCH MENU -->
-        <div id="search-menu">
-            <div class="flex items-center bg-white rounded-lg p-2 mb-4 border border-gray-200">
-                <i data-lucide="search" class="text-gray-400 w-4 h-4 mr-2"></i>
-                <input type="text" id="search-input" placeholder="Search apps and games..." class="bg-transparent outline-none text-sm text-black w-full" oninput="filterSearch()">
-            </div>
-            <div id="search-results" class="space-y-1 overflow-y-auto max-h-[300px]"></div>
-        </div>
-
-        <!-- APP WINDOW: STORE -->
-        <div id="win-store" class="app-window">
+        <!-- APP: GAME HUB -->
+        <div id="win-games" class="app-window" onmousedown="focusWin('games')">
             <div class="window-header">
-                <div class="flex items-center gap-2 text-xs font-bold"><i data-lucide="shopping-bag" class="w-3 h-3"></i> SYSTEM_STORE</div>
-                <button onclick="closeApp('store')" class="hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <span class="text-xs font-bold">GAME CONSOLE</span>
+                <button onclick="closeApp('games')" class="hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <div class="flex-grow p-6 overflow-y-auto">
-                <h2 class="text-xl font-bold mb-4">Marketplace</h2>
-                <div id="store-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div class="game-grid overflow-y-auto">
+                <div class="game-card" onclick="startGame('snake')">🐍 Snake</div>
+                <div class="game-card" onclick="startGame('mines')">💣 Mines</div>
+                <div class="game-card" onclick="startGame('tetris')">🧱 Tetris</div>
+                <div class="game-card" onclick="startGame('pong')">🏓 Pong</div>
+                <div class="game-card" onclick="startGame('breakout')">🧱 Breakout</div>
+                <div class="game-card" onclick="startGame('flappy')">🐦 Flappy</div>
+                <div class="game-card" onclick="startGame('spacer')">🚀 Galaxian</div>
+                <div class="game-card" onclick="startGame('runner')">🦖 Runner</div>
+                <div class="game-card" onclick="startGame('maze')">🌀 Maze</div>
             </div>
         </div>
 
-        <!-- APP WINDOW: NOTES -->
-        <div id="win-notes" class="app-window">
+        <!-- APP: ARCADE (The actual game instance) -->
+        <div id="win-arcade" class="app-window" onmousedown="focusWin('arcade')">
             <div class="window-header">
-                <div class="flex items-center gap-2 text-xs font-bold"><i data-lucide="file-text" class="w-3 h-3"></i> NOTES.TXT</div>
+                <span id="arcade-title" class="text-xs font-bold">PLAYING...</span>
+                <div class="flex gap-4">
+                    <span id="arcade-score" class="text-xs font-mono text-green-400">SCORE: 0</span>
+                    <button onclick="closeApp('arcade')" class="hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+            <div class="flex-grow flex items-center justify-center bg-black relative">
+                <canvas id="gameCanvas" width="400" height="400" oncontextmenu="return false;"></canvas>
+                <div id="game-overlay" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center hidden">
+                    <h2 class="text-3xl font-bold mb-4">CRITICAL FAILURE</h2>
+                    <button onclick="restartGame()" class="px-8 py-2 bg-blue-600 rounded-full font-bold hover:bg-blue-500">RETRY</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP: NOTES -->
+        <div id="win-notes" class="app-window" onmousedown="focusWin('notes')">
+            <div class="window-header">
+                <span class="text-xs font-bold">README.TXT</span>
                 <button onclick="closeApp('notes')" class="hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <div class="flex-grow p-6 bg-zinc-900 font-mono text-sm overflow-y-auto">
-                <div class="text-zinc-400 mb-4">System Information File</div>
-                <pre class="text-green-500">
--made by procat
--version 1.2
--windows 10 (System Emulation)
--android 16 (Mobile Emulation)
--security: encrypted
-
-[PATCH NOTES]
-* Fixed app opening issue (Hold to move, Tap to open)
-* Fixed toggleSettings error
-* Added draggable desktop icons
-* Added system search menu
-* Added uninstall functionality
-                </pre>
-            </div>
-        </div>
-
-        <!-- APP WINDOW: GAME ENGINE -->
-        <div id="win-arcade" class="app-window">
-            <div class="window-header">
-                <div class="flex items-center gap-2 text-xs font-bold"><i data-lucide="gamepad-2" class="w-3 h-3"></i> <span id="current-game-title">GAME</span></div>
-                <button onclick="closeApp('arcade')" class="hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>
-            <div id="game-container" class="flex-grow flex flex-col items-center justify-center bg-black">
-                <div id="score-display" class="mb-2 text-green-500 font-mono">SCORE: 0</div>
-                <canvas id="gameCanvas" width="400" height="400"></canvas>
+            <div class="p-6 font-mono text-sm overflow-y-auto">
+                <p class="text-blue-400 mb-4">SYSTEM UPDATE 2.1</p>
+                <p>- Snake: Wall collisions are now FATAL.</p>
+                <p>- Minesweeper: Right-click to FLAG (🚩).</p>
+                <p>- Added 5 New Games: Pong, Breakout, Flappy, Runner, Maze.</p>
+                <p>- Global Shortcut: Press 'ESC' to panic exit.</p>
             </div>
         </div>
 
         <div class="win-taskbar">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/archive/8/87/20211103131742%21Windows_logo_-_2021.svg" class="w-6 h-6 cursor-pointer" onclick="toggleSearch()">
-            <div id="taskbar-apps" class="flex gap-2 ml-4"></div>
-            <div class="absolute right-4 text-black text-[11px] font-semibold text-right">
-                <div id="clock-time">12:00 PM</div>
-                <div id="clock-date">1/21/2026</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ANDROID MOBILE EMULATOR -->
-    <div id="android-emulator">
-        <div class="p-6 pt-12 flex flex-col h-full">
-            <div class="flex justify-between items-center mb-10">
-                <div id="mobile-time" class="text-xl font-bold">12:00</div>
-                <div class="flex gap-2"><i data-lucide="wifi" class="w-4 h-4"></i><i data-lucide="battery" class="w-4 h-4"></i></div>
-            </div>
-            <div class="grid grid-cols-4 gap-y-8" id="mobile-icons">
-                <div class="flex flex-col items-center gap-2" onclick="openApp('store')">
-                    <div class="w-16 h-16 bg-blue-600 rounded-[22px] flex items-center justify-center shadow-xl"><i data-lucide="shopping-bag" class="w-8 h-8 text-white"></i></div>
-                    <span class="text-[10px] font-medium opacity-80">Store</span>
-                </div>
-                <div class="flex flex-col items-center gap-2" onclick="openApp('notes')">
-                    <div class="w-16 h-16 bg-yellow-500 rounded-[22px] flex items-center justify-center shadow-xl"><i data-lucide="file-text" class="w-8 h-8 text-white"></i></div>
-                    <span class="text-[10px] font-medium opacity-80">Notes</span>
+            <div class="flex gap-4 items-center">
+                <div class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 cursor-pointer" onclick="panic()">
+                    <i data-lucide="layout-grid" class="w-5 h-5 text-blue-400"></i>
                 </div>
             </div>
-            <div class="mt-auto flex justify-center pb-4"><div class="w-24 h-1.5 bg-white/30 rounded-full" onclick="panic()"></div></div>
         </div>
     </div>
 
     <script>
-        const APPS_DB = [
-            { id: 'snake', name: 'Snake Pro', color: 'bg-green-600', emoji: '🐍', desc: 'Classic survival.' },
-            { id: 'mines', name: 'Minesweeper', color: 'bg-red-600', emoji: '💣', desc: 'Find the bombs.' },
-            { id: 'tetris', name: 'Block Fit', color: 'bg-yellow-600', emoji: '🧱', desc: 'Stack them up.' },
-            { id: 'spacer', name: 'Galaxian', color: 'bg-indigo-600', emoji: '🚀', desc: 'Space defense.' }
-        ];
+        let calcVal = "0", calcPrev = null, calcOp = null, calcWait = false;
+        let lastAc = 0, currentAppId = null, gameLoop = null, score = 0;
+        let activeGame = null;
 
-        let installedApps = [];
-        let calcVal = "0", calcPrev = null, calcOp = null, calcWait = false, lastAcTap = 0;
-        let gameLoop = null, score = 0, currentDragged = null, dragOffset = {x:0, y:0};
-        let mouseDownTime = 0, isDragging = false;
-
-        // --- CALC CORE ---
         function press(key) {
-            const display = document.getElementById('entry-display');
+            const d = document.getElementById('entry-display');
             if (key === 'AC') {
-                const now = Date.now();
-                if (now - lastAcTap < 300) { panic(); return; }
-                lastAcTap = now;
-                calcVal = "0"; calcPrev = null; calcOp = null; calcWait = false;
-            } else if (!isNaN(key) || key === '.') {
-                if (calcWait) { calcVal = key; calcWait = false; }
-                else { calcVal = calcVal === "0" ? key : calcVal + key; }
-            } else if (['+', '-', '*', '/'].includes(key)) { calcPrev = parseFloat(calcVal); calcOp = key; calcWait = true; }
-            else if (key === '=') {
-                const current = parseFloat(calcVal);
-                if (calcPrev === 776 && calcOp === '*' && current === 228) { launchSystem(); return; }
-                if (calcOp) {
-                    let res = 0;
-                    if (calcOp === '+') res = calcPrev + current;
-                    if (calcOp === '-') res = calcPrev - current;
-                    if (calcOp === '*') res = calcPrev * current;
-                    if (calcOp === '/') res = calcPrev / current;
-                    calcVal = String(Math.round(res * 100) / 100); calcOp = null;
-                }
+                if (Date.now() - lastAc < 300) panic();
+                lastAc = Date.now();
+                calcVal = "0"; calcPrev = null; calcOp = null;
+            } else if (!isNaN(key)) {
+                calcVal = calcVal === "0" ? key : calcVal + key;
+            } else if (['+','-','*','/'].includes(key)) {
+                calcPrev = parseFloat(calcVal); calcOp = key; calcVal = "0";
+            } else if (key === '=') {
+                const cur = parseFloat(calcVal);
+                if (calcPrev === 776 && calcOp === '*' && cur === 228) { launch(); return; }
+                if (calcOp === '+') calcVal = (calcPrev + cur).toString();
+                if (calcOp === '-') calcVal = (calcPrev - cur).toString();
+                if (calcOp === '*') calcVal = (calcPrev * cur).toString();
+                if (calcOp === '/') calcVal = (calcPrev / cur).toString();
+                calcOp = null;
             }
-            display.innerText = calcVal;
+            d.innerText = calcVal;
         }
 
-        function launchSystem() {
-            document.getElementById('entry-layer').classList.add('fade-out');
+        function launch() {
+            document.getElementById('entry-layer').style.transform = 'translateY(-100%)';
             setTimeout(() => {
-                document.getElementById('entry-layer').classList.add('hidden');
-                const isMobile = window.innerWidth < 768;
-                if (isMobile) document.getElementById('android-emulator').style.display = 'flex';
-                else document.getElementById('win-emulator').style.display = 'block';
-                renderStore(); renderSearch();
-            }, 600);
+                document.getElementById('entry-layer').style.display = 'none';
+                document.getElementById('win-emulator').style.display = 'block';
+                lucide.createIcons();
+            }, 800);
         }
 
         function openApp(id) {
             const win = document.getElementById(`win-${id}`);
-            if (!win) {
-                document.getElementById(`win-arcade`).style.display = 'flex';
-                startGame(id);
-            } else { win.style.display = 'flex'; }
-            document.getElementById('search-menu').style.display = 'none';
-            refreshIcons();
+            win.style.display = 'flex';
+            focusWin(id);
         }
 
         function closeApp(id) {
             document.getElementById(`win-${id}`).style.display = 'none';
-            if (id === 'arcade') exitGame();
+            if (id === 'arcade') stopGame();
+        }
+
+        function focusWin(id) {
+            document.querySelectorAll('.app-window').forEach(w => w.classList.remove('active-win'));
+            document.getElementById(`win-${id}`).classList.add('active-win');
         }
 
         function panic() { location.reload(); }
 
-        // --- IMPROVED DRAG & CLICK LOGIC ---
-        function handleIconInteraction(e, id) {
-            if (e.button !== 0) return; // Only left click
-            
-            mouseDownTime = Date.now();
-            isDragging = false;
-            currentDragged = e.currentTarget;
-            const rect = currentDragged.getBoundingClientRect();
-            dragOffset.x = e.clientX - rect.left;
-            dragOffset.y = e.clientY - rect.top;
-            
-            const onMouseMove = (moveEv) => {
-                const dist = Math.hypot(moveEv.clientX - e.clientX, moveEv.clientY - e.clientY);
-                if (dist > 5) {
-                    isDragging = true;
-                    currentDragged.style.left = (moveEv.clientX - dragOffset.x) + 'px';
-                    currentDragged.style.top = (moveEv.clientY - dragOffset.y) + 'px';
-                }
-            };
+        // --- GAME ENGINE ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let gameInput = {};
 
-            const onMouseUp = () => {
-                window.removeEventListener('mousemove', onMouseMove);
-                window.removeEventListener('mouseup', onMouseUp);
+        function handleKey(e) {
+            if (e.key === 'Escape') panic();
+            gameInput[e.key] = true;
+        }
+        window.onkeyup = (e) => gameInput[e.key] = false;
+
+        function startGame(type) {
+            activeGame = type;
+            openApp('arcade');
+            document.getElementById('arcade-title').innerText = type.toUpperCase();
+            document.getElementById('game-overlay').classList.add('hidden');
+            score = 0;
+            updateScore();
+            if (gameLoop) clearInterval(gameLoop);
+            
+            const games = {
+                snake: initSnake,
+                mines: initMines,
+                tetris: initTetris,
+                pong: initPong,
+                breakout: initBreakout,
+                flappy: initFlappy,
+                spacer: initSpacer,
+                runner: initRunner,
+                maze: initMaze
+            };
+            games[type]();
+        }
+
+        function restartGame() { startGame(activeGame); }
+        function stopGame() { if (gameLoop) clearInterval(gameLoop); ctx.clearRect(0,0,400,400); }
+        function updateScore() { document.getElementById('arcade-score').innerText = `SCORE: ${score}`; }
+        function gameOver() { clearInterval(gameLoop); document.getElementById('game-overlay').classList.remove('hidden'); }
+
+        // 1. SNAKE (WALLS ARE FATAL)
+        function initSnake() {
+            let snake = [{x:10, y:10}], dir = {x:1, y:0}, food = {x:5, y:5};
+            gameLoop = setInterval(() => {
+                if (gameInput['ArrowUp'] && dir.y === 0) dir = {x:0, y:-1};
+                if (gameInput['ArrowDown'] && dir.y === 0) dir = {x:0, y:1};
+                if (gameInput['ArrowLeft'] && dir.x === 0) dir = {x:-1, y:0};
+                if (gameInput['ArrowRight'] && dir.x === 0) dir = {x:1, y:0};
+
+                const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
                 
-                const clickDuration = Date.now() - mouseDownTime;
-                // If it wasn't dragged much and it was a short click, open the app
-                if (!isDragging && clickDuration < 300) {
-                    openApp(id);
+                // WALL CHECK (FATAL)
+                if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20 || snake.some(s => s.x === head.x && s.y === head.y)) {
+                    return gameOver();
                 }
-                currentDragged = null;
-            };
 
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
-        }
+                snake.unshift(head);
+                if (head.x === food.x && head.y === food.y) {
+                    score += 10; updateScore();
+                    food = {x: Math.floor(Math.random()*20), y: Math.floor(Math.random()*20)};
+                } else snake.pop();
 
-        // --- SEARCH & STORE ---
-        function toggleSearch() {
-            const menu = document.getElementById('search-menu');
-            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-            if (menu.style.display === 'flex') {
-                document.getElementById('search-input').focus();
-                renderSearch();
-            }
-        }
-
-        function renderSearch() {
-            const res = document.getElementById('search-results');
-            const term = document.getElementById('search-input').value.toLowerCase();
-            const all = [
-                {id: 'store', name: 'App Store', emoji: '🛍️'},
-                {id: 'notes', name: 'Notes', emoji: '📝'},
-                ...installedApps.map(id => APPS_DB.find(a => a.id === id))
-            ].filter(a => a.name.toLowerCase().includes(term));
-
-            res.innerHTML = all.map(a => `
-                <div onclick="openApp('${a.id}')" class="flex items-center gap-3 p-2 hover:bg-gray-200 rounded-md cursor-pointer text-black">
-                    <div class="text-xl">${a.emoji || '⚙️'}</div>
-                    <div class="text-xs font-semibold">${a.name}</div>
-                </div>
-            `).join('');
-        }
-
-        function filterSearch() { renderSearch(); }
-
-        function renderStore() {
-            const list = document.getElementById('store-list');
-            list.innerHTML = APPS_DB.map(app => `
-                <div class="bg-zinc-800/50 p-4 rounded-xl flex items-center gap-4 border border-white/5">
-                    <div class="w-12 h-12 ${app.color} rounded-lg flex items-center justify-center text-xl shadow-lg">${app.emoji}</div>
-                    <div class="flex-grow">
-                        <h4 class="font-bold text-sm">${app.name}</h4>
-                        <div id="install-bar-${app.id}" class="h-1 bg-zinc-700 mt-2 hidden"><div class="h-full bg-blue-500 transition-all duration-300" style="width:0%"></div></div>
-                    </div>
-                    <button id="install-btn-${app.id}" onclick="installApp('${app.id}')" class="px-3 py-1 bg-white text-black text-[10px] font-bold rounded-full">
-                        ${installedApps.includes(app.id) ? 'GET' : 'INSTALL'}
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        function installApp(id) {
-            if (installedApps.includes(id)) return;
-            const bar = document.getElementById(`install-bar-${id}`);
-            const btn = document.getElementById(`install-btn-${id}`);
-            btn.classList.add('hidden'); bar.classList.remove('hidden');
-            let p = 0;
-            const iv = setInterval(() => {
-                p += 10; bar.children[0].style.width = p + '%';
-                if (p >= 100) {
-                    clearInterval(iv); installedApps.push(id);
-                    renderInstalledApps(); renderStore();
-                }
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
+                ctx.fillStyle = '#22c55e'; snake.forEach(p => ctx.fillRect(p.x*20, p.y*20, 18, 18));
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(food.x*20, food.y*20, 18, 18);
             }, 100);
         }
 
-        function renderInstalledApps() {
-            const desktop = document.getElementById('desktop-icons');
-            const mobile = document.getElementById('mobile-icons');
-            document.querySelectorAll('.dynamic-app').forEach(el => el.remove());
-
-            installedApps.forEach((id, idx) => {
-                const app = APPS_DB.find(a => a.id === id);
-                // Desktop
-                const d = document.createElement('div');
-                d.className = 'desktop-icon dynamic-app';
-                d.style.top = (20 + (idx + 2) * 90) + 'px'; d.style.left = '20px';
-                d.dataset.id = id;
-                d.onmousedown = (e) => handleIconInteraction(e, id);
-                d.oncontextmenu = (e) => showContext(e, id);
-                d.innerHTML = `<div class="icon-box ${app.color}">${app.emoji}</div><span class="text-[10px] text-white">${app.name}</span>`;
-                desktop.appendChild(d);
-
-                // Mobile
-                const m = document.createElement('div');
-                m.className = 'flex flex-col items-center gap-2 dynamic-app';
-                m.onclick = () => openApp(id);
-                m.innerHTML = `<div class="w-16 h-16 ${app.color} rounded-[22px] flex items-center justify-center text-3xl">${app.emoji}</div><span class="text-[10px] font-medium opacity-80">${app.name}</span>`;
-                mobile.appendChild(m);
-            });
-            refreshIcons();
-        }
-
-        function showContext(e, id) {
-            e.preventDefault();
-            const menu = document.getElementById('icon-ctx');
-            menu.style.display = 'block';
-            menu.style.left = e.clientX + 'px';
-            menu.style.top = e.clientY + 'px';
-            document.getElementById('ctx-delete').onclick = () => {
-                installedApps = installedApps.filter(a => a !== id);
-                renderInstalledApps(); renderStore(); menu.style.display = 'none';
-            };
-            return false;
-        }
-
-        document.addEventListener('click', () => document.getElementById('icon-ctx').style.display = 'none');
-
-        // --- MINI GAMES ENGINE ---
-        function startGame(type) {
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
-            const scoreEl = document.getElementById('score-display');
-            document.getElementById('current-game-title').innerText = type.toUpperCase() + ".EXE";
-            score = 0; scoreEl.innerText = "SCORE: 0";
-            if (gameLoop) clearInterval(gameLoop);
-
-            if (type === 'snake') {
-                let snake = [{x:10, y:10}], food = {x:15, y:15}, dir = {x:1,y:0}, nextDir = {x:1,y:0};
-                window.gameInput = (d) => {
-                    if (d === 'up' && dir.y === 0) nextDir = {x: 0, y: -1};
-                    if (d === 'down' && dir.y === 0) nextDir = {x: 0, y: 1};
-                    if (d === 'left' && dir.x === 0) nextDir = {x: -1, y: 0};
-                    if (d === 'right' && dir.x === 0) nextDir = {x: 1, y: 0};
-                };
-                gameLoop = setInterval(() => {
-                    dir = nextDir;
-                    const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
-                    if (head.x < 0) head.x = 19; if (head.x > 19) head.x = 0;
-                    if (head.y < 0) head.y = 19; if (head.y > 19) head.y = 0;
-                    if (head.x === food.x && head.y === food.y) {
-                        food = {x: Math.floor(Math.random()*20), y: Math.floor(Math.random()*20)};
-                        score += 10; scoreEl.innerText = "SCORE: " + score;
-                    } else snake.pop();
-                    if (snake.some(s => s.x === head.x && s.y === head.y)) exitGame();
-                    snake.unshift(head);
-                    ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
-                    ctx.fillStyle = '#0f0'; snake.forEach(p => ctx.fillRect(p.x*20, p.y*20, 18, 18));
-                    ctx.fillStyle = '#f00'; ctx.fillRect(food.x*20, food.y*20, 18, 18);
-                }, 100);
-            } else {
-                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
-                ctx.fillStyle = '#fff'; ctx.font = '12px monospace';
-                ctx.fillText(type.toUpperCase() + " LOADED. READY TO PLAY.", 80, 200);
+        // 2. MINESWEEPER (RIGHT CLICK TO FLAG)
+        function initMines() {
+            const size = 10, mines = 15, cell = 40;
+            let grid = Array(size).fill().map(() => Array(size).fill(0).map(() => ({m:false, r:false, f:false, n:0})));
+            let mCount = 0;
+            while(mCount < mines) {
+                let r = Math.floor(Math.random()*size), c = Math.floor(Math.random()*size);
+                if(!grid[r][c].m) { grid[r][c].m = true; mCount++; }
             }
+            // Calc neighbors
+            for(let r=0; r<size; r++) for(let c=0; c<size; c++) {
+                if(grid[r][c].m) continue;
+                for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) {
+                    if(r+i>=0 && r+i<size && c+j>=0 && c+j<size && grid[r+i][c+j].m) grid[r][c].n++;
+                }
+            }
+
+            const draw = () => {
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
+                grid.forEach((row, r) => row.forEach((v, c) => {
+                    ctx.strokeStyle = '#334155'; ctx.strokeRect(c*cell, r*cell, cell, cell);
+                    if(v.f) { ctx.fillStyle = '#f59e0b'; ctx.fillText('🚩', c*cell+12, r*cell+25); }
+                    else if(v.r) {
+                        ctx.fillStyle = v.m ? '#ef4444' : '#1e293b';
+                        ctx.fillRect(c*cell+1, r*cell+1, cell-2, cell-2);
+                        if(!v.m && v.n>0) { ctx.fillStyle = '#fff'; ctx.fillText(v.n, c*cell+15, r*cell+25); }
+                    } else { ctx.fillStyle = '#334155'; ctx.fillRect(c*cell+1, r*cell+1, cell-2, cell-2); }
+                }));
+            };
+            draw();
+
+            canvas.onmousedown = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left)/cell), y = Math.floor((e.clientY - rect.top)/cell);
+                if (e.button === 2) { // Right Click
+                    grid[y][x].f = !grid[y][x].f;
+                } else if(!grid[y][x].f) {
+                    grid[y][x].r = true;
+                    if(grid[y][x].m) return gameOver();
+                    score++; updateScore();
+                }
+                draw();
+            };
         }
 
-        function exitGame() { clearInterval(gameLoop); document.getElementById('win-arcade').style.display = 'none'; }
-        function refreshIcons() { if (window.lucide) window.lucide.createIcons(); }
-        
-        function updateClocks() {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            if (document.getElementById('clock-time')) document.getElementById('clock-time').innerText = timeStr;
-            if (document.getElementById('mobile-time')) document.getElementById('mobile-time').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            setTimeout(updateClocks, 1000);
+        // 3. TETRIS
+        function initTetris() {
+            let board = Array(20).fill().map(() => Array(10).fill(0));
+            let cur = [[1,1,1,1]], pos = {x:3, y:0};
+            gameLoop = setInterval(() => {
+                if(gameInput['ArrowLeft']) pos.x--;
+                if(gameInput['ArrowRight']) pos.x++;
+                pos.y++;
+                if(pos.y > 18) {
+                    board[pos.y][pos.x] = 1; pos = {x:3, y:0};
+                    score += 5; updateScore();
+                }
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
+                ctx.fillStyle = '#3b82f6';
+                cur.forEach((r, y) => r.forEach((v, x) => v && ctx.fillRect((pos.x+x)*20+100, (pos.y+y)*20, 18, 18)));
+            }, 200);
         }
 
-        window.onload = () => { updateClocks(); refreshIcons(); };
+        // 4. PONG
+        function initPong() {
+            let p1 = 160, p2 = 160, ball = {x:200, y:200, dx:3, dy:3};
+            gameLoop = setInterval(() => {
+                if(gameInput['ArrowUp']) p1 -= 5; if(gameInput['ArrowDown']) p1 += 5;
+                p2 += (ball.y - (p2+40)) * 0.1; // AI
+                ball.x += ball.dx; ball.y += ball.dy;
+                if(ball.y<0 || ball.y>390) ball.dy *= -1;
+                if(ball.x<20 && ball.y>p1 && ball.y<p1+80) { ball.dx *= -1; score++; updateScore(); }
+                if(ball.x>380 && ball.y>p2 && ball.y<p2+80) ball.dx *= -1;
+                if(ball.x<0) return gameOver();
+                
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
+                ctx.fillStyle = '#fff'; 
+                ctx.fillRect(10, p1, 10, 80); ctx.fillRect(380, p2, 10, 80);
+                ctx.fillRect(ball.x, ball.y, 8, 8);
+            }, 20);
+        }
+
+        // 5. BREAKOUT
+        function initBreakout() {
+            let paddle = 160, ball = {x:200, y:300, dx:2, dy:-2}, bricks = [];
+            for(let i=0; i<5; i++) for(let j=0; j<8; j++) bricks.push({x:j*50+5, y:i*20+30, v:true});
+            gameLoop = setInterval(() => {
+                if(gameInput['ArrowLeft']) paddle -= 6; if(gameInput['ArrowRight']) paddle += 6;
+                ball.x += ball.dx; ball.y += ball.dy;
+                if(ball.x<0 || ball.x>390) ball.dx *= -1; if(ball.y<0) ball.dy *= -1;
+                if(ball.y>370 && ball.x>paddle && ball.x<paddle+80) ball.dy *= -1;
+                if(ball.y>400) return gameOver();
+                bricks.forEach(b => {
+                    if(b.v && ball.x>b.x && ball.x<b.x+45 && ball.y>b.y && ball.y<b.y+15) {
+                        b.v = false; ball.dy *= -1; score += 20; updateScore();
+                    }
+                });
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
+                ctx.fillStyle = '#ef4444'; bricks.forEach(b => b.v && ctx.fillRect(b.x, b.y, 45, 15));
+                ctx.fillStyle = '#3b82f6'; ctx.fillRect(paddle, 380, 80, 10);
+                ctx.fillStyle = '#fff'; ctx.fillRect(ball.x, ball.y, 8, 8);
+            }, 15);
+        }
+
+        // 6. FLAPPY
+        function initFlappy() {
+            let bird = 200, vel = 0, pipes = [{x:400, y:200}];
+            gameLoop = setInterval(() => {
+                if(gameInput[' '] || gameInput['ArrowUp']) vel = -5;
+                vel += 0.3; bird += vel;
+                pipes.forEach(p => {
+                    p.x -= 3;
+                    if(p.x < -50) { p.x = 400; p.y = 100 + Math.random()*200; score++; updateScore(); }
+                    if(p.x < 50 && p.x > 0 && (bird < p.y - 50 || bird > p.y + 50)) return gameOver();
+                });
+                if(bird > 400 || bird < 0) return gameOver();
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
+                ctx.fillStyle = '#fbbf24'; ctx.fillRect(30, bird, 20, 20);
+                ctx.fillStyle = '#22c55e'; pipes.forEach(p => {
+                    ctx.fillRect(p.x, 0, 40, p.y-50); ctx.fillRect(p.x, p.y+50, 40, 400);
+                });
+            }, 20);
+        }
+
+        // 7. SPACER
+        function initSpacer() {
+            let ship = 200, bullets = [], enemies = [];
+            gameLoop = setInterval(() => {
+                if(gameInput['ArrowLeft']) ship -= 5; if(gameInput['ArrowRight']) ship += 5;
+                if(gameInput[' ']) bullets.push({x:ship+8, y:370});
+                if(Math.random() < 0.05) enemies.push({x:Math.random()*380, y:0});
+                bullets.forEach((b, i) => { b.y -= 7; if(b.y<0) bullets.splice(i,1); });
+                enemies.forEach((e, i) => { 
+                    e.y += 3; 
+                    if(e.y>400) return gameOver();
+                    bullets.forEach((b, bi) => {
+                        if(Math.hypot(e.x-b.x, e.y-b.y) < 20) { enemies.splice(i,1); bullets.splice(bi,1); score += 50; updateScore(); }
+                    });
+                });
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
+                ctx.fillStyle = '#fff'; bullets.forEach(b => ctx.fillRect(b.x, b.y, 4, 10));
+                ctx.fillStyle = '#3b82f6'; ctx.fillRect(ship, 380, 20, 10);
+                ctx.fillStyle = '#ef4444'; enemies.forEach(e => ctx.fillRect(e.x, e.y, 20, 20));
+            }, 20);
+        }
+
+        // 8. RUNNER (Dino clone)
+        function initRunner() {
+            let y = 350, vel = 0, obs = [{x:400}];
+            gameLoop = setInterval(() => {
+                if((gameInput[' '] || gameInput['ArrowUp']) && y >= 350) vel = -10;
+                vel += 0.5; y += vel; if(y > 350) y = 350;
+                obs.forEach(o => {
+                    o.x -= 5;
+                    if(o.x < -20) { o.x = 400 + Math.random()*200; score++; updateScore(); }
+                    if(o.x < 50 && o.x > 20 && y > 320) return gameOver();
+                });
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
+                ctx.fillStyle = '#fff'; ctx.fillRect(20, y, 30, 30);
+                ctx.fillStyle = '#ef4444'; obs.forEach(o => ctx.fillRect(o.x, 350, 20, 30));
+            }, 20);
+        }
+
+        // 9. MAZE
+        function initMaze() {
+            let px = 20, py = 20;
+            let walls = [];
+            for(let i=0; i<30; i++) walls.push({x:Math.floor(Math.random()*19)*20, y:Math.floor(Math.random()*19)*20});
+            let goal = {x:360, y:360};
+            gameLoop = setInterval(() => {
+                let ox = px, oy = py;
+                if(gameInput['ArrowUp']) py -= 4; if(gameInput['ArrowDown']) py += 4;
+                if(gameInput['ArrowLeft']) px -= 4; if(gameInput['ArrowRight']) px += 4;
+                if(walls.some(w => px < w.x+20 && px+15 > w.x && py < w.y+20 && py+15 > w.y)) { px = ox; py = oy; }
+                if(Math.hypot(px-goal.x, py-goal.y) < 20) { score += 1000; updateScore(); initMaze(); }
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,400);
+                ctx.fillStyle = '#334155'; walls.forEach(w => ctx.fillRect(w.x, w.y, 20, 20));
+                ctx.fillStyle = '#22c55e'; ctx.fillRect(goal.x, goal.y, 20, 20);
+                ctx.fillStyle = '#fff'; ctx.fillRect(px, py, 15, 15);
+            }, 20);
+        }
+
     </script>
 </body>
 </html>
