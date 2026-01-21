@@ -34,7 +34,18 @@
             flex-direction: column;
             padding: 20px;
             justify-content: flex-end;
+            align-items: center; /* Center for desktop */
             transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .calc-container {
+            width: 100%;
+            max-width: 400px; /* Constrain width so it looks like a phone on PC */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            height: 100%;
+            padding-bottom: 20px;
         }
 
         .iphone-btn {
@@ -43,7 +54,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: clamp(1.2rem, 5vw, 2rem); /* Dynamic font size */
             cursor: pointer;
             user-select: none;
             transition: filter 0.2s;
@@ -142,35 +153,37 @@
 
     <!-- LAYER 1: IPHONE CALCULATOR ENTRY -->
     <div id="entry-layer">
-        <div class="mb-8 px-4">
-            <div id="entry-history" class="text-right text-zinc-500 text-xl h-8"></div>
-            <div id="entry-display" class="text-right text-white text-8xl font-light truncate">0</div>
-        </div>
-        
-        <div class="grid grid-cols-4 gap-4 mb-8">
-            <div onclick="press('AC')" class="iphone-btn gray" id="ac-btn">AC</div>
-            <div onclick="press('+/-')" class="iphone-btn gray">⁺/₋</div>
-            <div onclick="press('%')" class="iphone-btn gray">%</div>
-            <div onclick="press('/')" class="iphone-btn orange">÷</div>
+        <div class="calc-container">
+            <div class="mb-6 px-4">
+                <div id="entry-history" class="text-right text-zinc-500 text-lg h-6"></div>
+                <div id="entry-display" class="text-right text-white text-7xl font-light truncate">0</div>
+            </div>
             
-            <div onclick="press('7')" class="iphone-btn dark">7</div>
-            <div onclick="press('8')" class="iphone-btn dark">8</div>
-            <div onclick="press('9')" class="iphone-btn dark">9</div>
-            <div onclick="press('*')" class="iphone-btn orange">×</div>
+            <div class="grid grid-cols-4 gap-3">
+                <div onclick="press('AC')" class="iphone-btn gray" id="ac-btn">AC</div>
+                <div onclick="press('+/-')" class="iphone-btn gray">⁺/₋</div>
+                <div onclick="press('%')" class="iphone-btn gray">%</div>
+                <div onclick="press('/')" class="iphone-btn orange">÷</div>
+                
+                <div onclick="press('7')" class="iphone-btn dark">7</div>
+                <div onclick="press('8')" class="iphone-btn dark">8</div>
+                <div onclick="press('9')" class="iphone-btn dark">9</div>
+                <div onclick="press('*')" class="iphone-btn orange">×</div>
 
-            <div onclick="press('4')" class="iphone-btn dark">4</div>
-            <div onclick="press('5')" class="iphone-btn dark">5</div>
-            <div onclick="press('6')" class="iphone-btn dark">6</div>
-            <div onclick="press('-')" class="iphone-btn orange">−</div>
+                <div onclick="press('4')" class="iphone-btn dark">4</div>
+                <div onclick="press('5')" class="iphone-btn dark">5</div>
+                <div onclick="press('6')" class="iphone-btn dark">6</div>
+                <div onclick="press('-')" class="iphone-btn orange">−</div>
 
-            <div onclick="press('1')" class="iphone-btn dark">1</div>
-            <div onclick="press('2')" class="iphone-btn dark">2</div>
-            <div onclick="press('3')" class="iphone-btn dark">3</div>
-            <div onclick="press('+')" class="iphone-btn orange">+</div>
+                <div onclick="press('1')" class="iphone-btn dark">1</div>
+                <div onclick="press('2')" class="iphone-btn dark">2</div>
+                <div onclick="press('3')" class="iphone-btn dark">3</div>
+                <div onclick="press('+')" class="iphone-btn orange">+</div>
 
-            <div onclick="press('0')" class="iphone-btn dark col-span-2 !aspect-auto !rounded-full !justify-start pl-10">0</div>
-            <div onclick="press('.')" class="iphone-btn dark">.</div>
-            <div onclick="press('=')" class="iphone-btn orange">=</div>
+                <div onclick="press('0')" class="iphone-btn dark col-span-2 !aspect-auto !rounded-full !justify-start pl-8">0</div>
+                <div onclick="press('.')" class="iphone-btn dark">.</div>
+                <div onclick="press('=')" class="iphone-btn orange">=</div>
+            </div>
         </div>
     </div>
 
